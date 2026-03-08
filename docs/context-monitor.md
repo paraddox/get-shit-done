@@ -1,5 +1,7 @@
 # Context Window Monitor
 
+> Status: supported for Claude Code and Gemini CLI. Codex installs do not currently register these hooks or statusline integrations.
+
 A post-tool hook (`PostToolUse` for Claude Code, `AfterTool` for Gemini CLI) that warns the agent when context window usage is high.
 
 ## Problem

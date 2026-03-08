@@ -91,6 +91,13 @@ Verify with:
 > [!NOTE]
 > Codex installation uses skills (`skills/gsd-*/SKILL.md`) rather than custom prompts.
 
+### Codex Notes
+
+- Codex commands are invoked as skills: `$gsd-new-project`, `$gsd-plan-phase`, `$gsd-execute-phase`, etc.
+- Global Codex install location resolves as: `--config-dir` → `CODEX_HOME` → `~/.codex/`
+- GSD writes a managed block into `.codex/config.toml` and preserves non-GSD sections on reinstall/uninstall.
+- Codex installs do **not** configure `settings.json`, statusline, or hook integrations. Those are currently Claude/Gemini-only.
+
 ### Staying Updated
 
 GSD evolves fast. Update periodically:
@@ -138,6 +145,22 @@ node bin/install.js --claude --local
 ```
 
 Installs to `./.claude/` for testing modifications before contributing.
+
+For Codex development testing:
+
+```bash
+node bin/install.js --codex --local
+```
+
+Installs to `./.codex/` so you can validate generated skills and `config.toml` directly from a clone.
+
+For release validation, smoke-test the packaged artifact rather than only the checkout:
+
+```bash
+tmpdir=$(mktemp -d)
+npm pack --json --pack-destination "$tmpdir"
+(cd /tmp/some-project && npm exec --yes --package "$tmpdir/get-shit-done-cc-$(node -p \"require('./package.json').version\").tgz\" get-shit-done-cc -- --codex --local)
+```
 
 </details>
 
@@ -632,6 +655,7 @@ This prevents Claude from reading these files entirely, regardless of what comma
 
 **Commands not working as expected?**
 - Run `/gsd:help` to verify installation
+- For Codex, run `$gsd-help` to verify installation
 - Re-run `npx get-shit-done-cc` to reinstall
 
 **Updating to the latest version?**
@@ -641,9 +665,10 @@ npx get-shit-done-cc@latest
 
 **Using Docker or containerized environments?**
 
-If file reads fail with tilde paths (`~/.claude/...`), set `CLAUDE_CONFIG_DIR` before installing:
+If file reads fail with runtime config paths in containers, set the runtime config dir before installing:
 ```bash
 CLAUDE_CONFIG_DIR=/home/youruser/.claude npx get-shit-done-cc --global
+CODEX_HOME=/home/youruser/.codex npx get-shit-done-cc --codex --global
 ```
 This ensures absolute paths are used instead of `~` which may not expand correctly in containers.
 

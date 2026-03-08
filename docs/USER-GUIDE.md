@@ -186,6 +186,9 @@ enabled, or after `/gsd:audit-milestone` surfaces Nyquist compliance gaps.
 
 ## Command Reference
 
+> [!NOTE]
+> In Codex, GSD commands are installed as skills and invoked as `$gsd-*` instead of `/gsd:*`.
+
 ### Core Workflow
 
 | Command | Purpose | When to Use |
