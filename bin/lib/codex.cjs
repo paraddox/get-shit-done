@@ -173,6 +173,10 @@ function generateCodexConfigBlock(agents, hookCommands = {}) {
   return lines.join('\n');
 }
 
+function stripTopLevelAgentsTable(block) {
+  return block.replace(/^\[agents\]\n(?:(?!\[)[^\n]*\n?)*/m, '');
+}
+
 function stripGsdFromCodexConfig(content) {
   const markerIndex = content.indexOf(GSD_CODEX_MARKER);
 
@@ -211,10 +215,10 @@ function mergeCodexConfig(configPath, gsdBlock) {
     let before = existing.substring(0, markerIndex).trimEnd();
     if (before) {
       before = before.replace(/^\[agents\.gsd-[^\]]+\]\n(?:(?!\[)[^\n]*\n?)*/gm, '');
-      before = before.replace(/^\[agents\]\n(?:(?!\[)[^\n]*\n?)*/m, '');
       before = before.replace(/\n{3,}/g, '\n\n').trimEnd();
 
       const hasFeatures = /^\[features\]\s*$/m.test(before);
+      const hasAgents = /^\[agents\]\s*$/m.test(before);
       if (hasFeatures) {
         if (!before.includes('multi_agent')) {
           before = before.replace(/^\[features\]\s*$/m, '[features]\nmulti_agent = true');
@@ -223,9 +227,12 @@ function mergeCodexConfig(configPath, gsdBlock) {
           before = before.replace(/^\[features\].*$/m, '$&\ndefault_mode_request_user_input = true');
         }
       }
-      const block = hasFeatures
+      let block = hasFeatures
         ? GSD_CODEX_MARKER + '\n' + gsdBlock.substring(gsdBlock.indexOf('[agents]'))
         : gsdBlock;
+      if (hasAgents) {
+        block = stripTopLevelAgentsTable(block);
+      }
       fs.writeFileSync(configPath, before + '\n\n' + block + '\n');
     } else {
       fs.writeFileSync(configPath, gsdBlock + '\n');
@@ -236,6 +243,7 @@ function mergeCodexConfig(configPath, gsdBlock) {
   let content = existing;
   const featuresRegex = /^\[features\]\s*$/m;
   const hasFeatures = featuresRegex.test(content);
+  const hasAgents = /^\[agents\]\s*$/m.test(content);
 
   if (hasFeatures) {
     if (!content.includes('multi_agent')) {
@@ -244,10 +252,17 @@ function mergeCodexConfig(configPath, gsdBlock) {
     if (!content.includes('default_mode_request_user_input')) {
       content = content.replace(/^\[features\].*$/m, '$&\ndefault_mode_request_user_input = true');
     }
-    const agentsBlock = gsdBlock.substring(gsdBlock.indexOf('[agents]'));
+    let agentsBlock = gsdBlock.substring(gsdBlock.indexOf('[agents]'));
+    if (hasAgents) {
+      agentsBlock = stripTopLevelAgentsTable(agentsBlock);
+    }
     content = content.trimEnd() + '\n\n' + GSD_CODEX_MARKER + '\n' + agentsBlock + '\n';
   } else {
-    content = content.trimEnd() + '\n\n' + gsdBlock + '\n';
+    let block = gsdBlock;
+    if (hasAgents) {
+      block = stripTopLevelAgentsTable(block);
+    }
+    content = content.trimEnd() + '\n\n' + block + '\n';
   }
 
   fs.writeFileSync(configPath, content);

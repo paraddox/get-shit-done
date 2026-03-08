@@ -494,6 +494,23 @@ describe('mergeCodexConfig', () => {
     assert.strictEqual(first, second, 'idempotent after 2nd merge');
     assert.strictEqual(second, third, 'idempotent after 3rd merge');
   });
+
+  test('does not duplicate existing user [agents] table', () => {
+    const configPath = path.join(tmpDir, 'config.toml');
+    fs.writeFileSync(
+      configPath,
+      '[agents]\nmax_threads = 16\n\n[agents.custom]\ndescription = "user agent"\n'
+    );
+
+    mergeCodexConfig(configPath, sampleBlock);
+
+    const content = fs.readFileSync(configPath, 'utf8');
+    const agentsCount = (content.match(/^\[agents\]\s*$/gm) || []).length;
+    assert.strictEqual(agentsCount, 1, 'exactly one [agents] section');
+    assert.ok(content.includes('max_threads = 16'), 'preserves user agent settings');
+    assert.ok(content.includes('[agents.custom]'), 'preserves user agent');
+    assert.ok(content.includes('[agents.gsd-executor]'), 'adds GSD agent section');
+  });
 });
 
 // ─── Integration: installCodexConfig ────────────────────────────────────────────
