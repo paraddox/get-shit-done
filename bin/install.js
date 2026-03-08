@@ -1795,8 +1795,9 @@ function install(isGlobal, runtime = 'claude') {
   reportLocalPatches(targetDir, runtime);
 
   // Verify no leaked .claude paths in non-Claude runtimes
-  if (runtime !== 'claude') {
+  {
     const leakedPaths = [];
+    const unresolvedTokens = [];
     function scanForLeakedPaths(dir) {
       if (!fs.existsSync(dir)) return;
       const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -1806,9 +1807,15 @@ function install(isGlobal, runtime = 'claude') {
           scanForLeakedPaths(fullPath);
         } else if ((entry.name.endsWith('.md') || entry.name.endsWith('.toml')) && entry.name !== 'CHANGELOG.md') {
           const content = fs.readFileSync(fullPath, 'utf8');
-          const matches = content.match(/(?:~|\$HOME)\/\.claude\b/g);
-          if (matches) {
-            leakedPaths.push({ file: fullPath.replace(targetDir + '/', ''), count: matches.length });
+          const claudeMatches = runtime !== 'claude'
+            ? content.match(/(?:~|\$HOME)\/\.claude\b/g)
+            : null;
+          if (claudeMatches) {
+            leakedPaths.push({ file: fullPath.replace(targetDir + '/', ''), count: claudeMatches.length });
+          }
+          const tokenMatches = content.match(/__GSD_[A-Z_]+__/g);
+          if (tokenMatches) {
+            unresolvedTokens.push({ file: fullPath.replace(targetDir + '/', ''), count: tokenMatches.length });
           }
         }
       }
@@ -1824,6 +1831,17 @@ function install(isGlobal, runtime = 'claude') {
         console.warn(`     ${dim}... and ${leakedPaths.length - 5} more file(s)${reset}`);
       }
       console.warn(`  ${dim}These paths may not resolve correctly for ${runtimeLabel}.${reset}`);
+    }
+    if (unresolvedTokens.length > 0) {
+      const totalTokens = unresolvedTokens.reduce((sum, l) => sum + l.count, 0);
+      console.warn(`\n  ${yellow}⚠${reset}  Found ${totalTokens} unresolved runtime token(s) in ${unresolvedTokens.length} file(s):`);
+      for (const token of unresolvedTokens.slice(0, 5)) {
+        console.warn(`     ${dim}${token.file}${reset} (${token.count})`);
+      }
+      if (unresolvedTokens.length > 5) {
+        console.warn(`     ${dim}... and ${unresolvedTokens.length - 5} more file(s)${reset}`);
+      }
+      console.warn(`  ${dim}These tokens should have been replaced during install.${reset}`);
     }
   }
 

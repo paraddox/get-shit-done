@@ -536,7 +536,7 @@ Output: Chat component, API endpoints.
 </objective>
 
 <execution_context>
-@~/.claude/get-shit-done/workflows/execute-plan.md
+@__GSD_PATH__get-shit-done/workflows/execute-plan.md
 </execution_context>
 
 <context>
@@ -1563,4 +1563,3 @@ describe('phase complete milestone-scoped next-phase', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 // milestone complete command
 // ─────────────────────────────────────────────────────────────────────────────
-

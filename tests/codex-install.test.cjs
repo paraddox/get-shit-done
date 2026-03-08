@@ -65,13 +65,16 @@ describe('Codex installer integration', () => {
     assert.ok(config.includes('multi_agent = true'), 'config includes multi_agent');
     assert.ok(config.includes('default_mode_request_user_input = true'), 'config includes request_user_input flag');
     assert.ok(!config.includes('~/.claude'), 'config has no leaked Claude path');
+    assert.ok(!config.includes('__GSD_'), 'config has no unresolved runtime tokens');
 
     assert.ok(helpSkill.includes('<codex_skill_adapter>'), 'help skill includes adapter');
     assert.ok(helpSkill.includes('$gsd-help'), 'help skill uses Codex invocation');
     assert.ok(!helpSkill.includes('~/.claude'), 'help skill has no leaked Claude path');
+    assert.ok(!helpSkill.includes('__GSD_'), 'help skill has no unresolved runtime tokens');
 
     assert.ok(executorToml.includes('sandbox_mode = "workspace-write"'), 'executor toml has workspace-write');
     assert.ok(!executorToml.includes('~/.claude'), 'executor toml has no leaked Claude path');
+    assert.ok(!executorToml.includes('__GSD_'), 'executor toml has no unresolved runtime tokens');
 
     assert.ok(
       Object.keys(manifest.files).some(file => file.startsWith('skills/gsd-help/')),

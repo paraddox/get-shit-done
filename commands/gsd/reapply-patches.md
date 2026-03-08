@@ -24,7 +24,7 @@ elif [ -d "$HOME/.gemini/gsd-local-patches" ]; then
 elif [ -d "$HOME/.codex/gsd-local-patches" ]; then
   PATCHES_DIR="$HOME/.codex/gsd-local-patches"
 else
-  PATCHES_DIR="$HOME/.claude/gsd-local-patches"
+  PATCHES_DIR="__GSD_HOME_PATH__gsd-local-patches"
 fi
 # Local install fallback — check all runtime directories
 if [ ! -d "$PATCHES_DIR" ]; then

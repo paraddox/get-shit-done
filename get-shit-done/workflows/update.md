@@ -13,9 +13,9 @@ Detect whether GSD is installed locally or globally by checking both locations a
 
 ```bash
 # Check local first (takes priority only if valid)
-# Detect runtime config directory (supports Claude, OpenCode, Gemini)
+# Detect runtime config directory (supports Claude, OpenCode, Gemini, Codex)
 LOCAL_VERSION_FILE="" LOCAL_MARKER_FILE="" LOCAL_DIR=""
-for dir in .claude .config/opencode .opencode .gemini; do
+for dir in .claude .config/opencode .opencode .gemini .codex; do
   if [ -f "./$dir/get-shit-done/VERSION" ]; then
     LOCAL_VERSION_FILE="./$dir/get-shit-done/VERSION"
     LOCAL_MARKER_FILE="./$dir/get-shit-done/workflows/update.md"
@@ -24,7 +24,7 @@ for dir in .claude .config/opencode .opencode .gemini; do
   fi
 done
 GLOBAL_VERSION_FILE="" GLOBAL_MARKER_FILE="" GLOBAL_DIR=""
-for dir in .claude .config/opencode .opencode .gemini; do
+for dir in .claude .config/opencode .opencode .gemini .codex; do
   if [ -f "$HOME/$dir/get-shit-done/VERSION" ]; then
     GLOBAL_VERSION_FILE="$HOME/$dir/get-shit-done/VERSION"
     GLOBAL_MARKER_FILE="$HOME/$dir/get-shit-done/workflows/update.md"
@@ -149,7 +149,7 @@ Exit.
 - `get-shit-done/` will be wiped and replaced
 - `agents/gsd-*` files will be replaced
 
-(Paths are relative to your install location: `~/.claude/` for global, `./.claude/` for local)
+(Paths are relative to your install location: `__GSD_PATH__` for global, `__GSD_LOCAL_PATH__` for local)
 
 Your custom files in other locations are preserved:
 - Custom commands not in `commands/gsd/` ✓
@@ -188,7 +188,7 @@ Clear the update cache so statusline indicator disappears:
 
 ```bash
 # Clear update cache across all runtime directories
-for dir in .claude .config/opencode .opencode .gemini; do
+for dir in .claude .config/opencode .opencode .gemini .codex; do
   rm -f "./$dir/cache/gsd-update-check.json"
   rm -f "$HOME/$dir/cache/gsd-update-check.json"
 done

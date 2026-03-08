@@ -121,9 +121,10 @@ describe('SPAWN: spawn type consistency', () => {
       const files = fs.readdirSync(dir).filter(f => f.endsWith('.md'));
       for (const file of files) {
         const content = fs.readFileSync(path.join(dir, file), 'utf-8');
-        const hasWorkaround = content.includes('First, read ~/.claude/agents/gsd-');
+        const hasLegacyWorkaround = content.includes('First, read ~/.claude/agents/gsd-');
+        const hasTokenizedWorkaround = content.includes('First, read __GSD_PATH__agents/gsd-');
         assert.ok(
-          !hasWorkaround,
+          !hasLegacyWorkaround && !hasTokenizedWorkaround,
           `${file} still has "First, read agent .md" workaround — use named subagent_type instead`
         );
       }
