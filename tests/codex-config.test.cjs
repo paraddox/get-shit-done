@@ -16,6 +16,7 @@ const os = require('os');
 
 const {
   getCodexSkillAdapterHeader,
+  convertClaudeCommandToCodexSkill,
   convertClaudeAgentToCodexAgent,
   generateCodexAgentToml,
   generateCodexConfigBlock,
@@ -62,6 +63,44 @@ describe('getCodexSkillAdapterHeader', () => {
     assert.ok(result.includes('wait(ids)'), 'documents parallel wait pattern');
     assert.ok(result.includes('close_agent'), 'documents close_agent cleanup');
     assert.ok(result.includes('CHECKPOINT'), 'documents result markers');
+  });
+});
+
+// ─── convertClaudeCommandToCodexSkill ──────────────────────────────────────────
+
+describe('convertClaudeCommandToCodexSkill', () => {
+  test('converts command frontmatter and slash-command syntax', () => {
+    const input = `---
+name: gsd:help
+description: Show available GSD commands
+---
+<execution_context>
+@~/.claude/get-shit-done/workflows/help.md
+</execution_context>
+
+Run /gsd:plan-phase with $ARGUMENTS after /gsd-help if needed.
+`;
+
+    const result = convertClaudeCommandToCodexSkill(input, 'gsd-help');
+
+    assert.ok(result.startsWith('---\n'), 'starts with frontmatter');
+    assert.ok(result.includes('name: "gsd-help"'), 'uses skill name in frontmatter');
+    assert.ok(result.includes('description: "Show available GSD commands"'), 'preserves description');
+    assert.ok(result.includes('<codex_skill_adapter>'), 'injects Codex adapter');
+    assert.ok(result.includes('$gsd-plan-phase'), 'converts slash command to Codex skill mention');
+    assert.ok(result.includes('$gsd-help'), 'converts flat slash command');
+    assert.ok(result.includes('{{GSD_ARGS}}'), 'converts arguments placeholder');
+    assert.ok(!result.includes('/gsd:plan-phase'), 'removes original slash command');
+    assert.ok(!result.includes('/gsd-help'), 'removes original flat slash command');
+  });
+
+  test('falls back to generic description without frontmatter', () => {
+    const input = 'Use /gsd:execute-phase here.';
+    const result = convertClaudeCommandToCodexSkill(input, 'gsd-execute-phase');
+
+    assert.ok(result.includes('name: "gsd-execute-phase"'), 'uses provided skill name');
+    assert.ok(result.includes('Run GSD workflow gsd-execute-phase.'), 'uses fallback description');
+    assert.ok(result.includes('$gsd-execute-phase'), 'converts body slash command');
   });
 });
 
