@@ -24,6 +24,10 @@ const CODEX_AGENT_SANDBOX = {
   'gsd-integration-checker': 'read-only',
 };
 
+function toTomlArray(values) {
+  return `[${values.map(value => JSON.stringify(value)).join(', ')}]`;
+}
+
 function convertSlashCommandsToCodexSkillMentions(content) {
   let converted = content.replace(/\/gsd:([a-z0-9-]+)/gi, (_, commandName) => {
     return `$gsd-${String(commandName).toLowerCase()}`;
@@ -133,7 +137,7 @@ function generateCodexAgentToml(agentName, agentContent) {
   return lines.join('\n') + '\n';
 }
 
-function generateCodexConfigBlock(agents) {
+function generateCodexConfigBlock(agents, hookCommands = {}) {
   const lines = [
     GSD_CODEX_MARKER,
     '[features]',
@@ -150,6 +154,19 @@ function generateCodexConfigBlock(agents) {
     lines.push(`[agents.${name}]`);
     lines.push(`description = ${JSON.stringify(description)}`);
     lines.push(`config_file = "agents/${name}.toml"`);
+    lines.push('');
+  }
+
+  const hookOrder = [
+    'session_start',
+    'tool_use_complete',
+    'tool_use_failure',
+  ];
+  for (const hookName of hookOrder) {
+    const command = hookCommands[hookName];
+    if (!Array.isArray(command) || command.length === 0) continue;
+    lines.push(`[[hooks.${hookName}]]`);
+    lines.push(`command = ${toTomlArray(command)}`);
     lines.push('');
   }
 

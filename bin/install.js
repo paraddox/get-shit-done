@@ -455,7 +455,12 @@ function installCodexConfig(targetDir, agentsSrc) {
     fs.writeFileSync(path.join(agentsTomlDir, `${name}.toml`), tomlContent);
   }
 
-  const gsdBlock = generateCodexConfigBlock(agents);
+  const hookCommands = {
+    session_start: buildCodexHookCommand(targetDir, 'gsd-check-update.js'),
+    tool_use_complete: buildCodexHookCommand(targetDir, 'gsd-context-monitor.js'),
+    tool_use_failure: buildCodexHookCommand(targetDir, 'gsd-context-monitor.js'),
+  };
+  const gsdBlock = generateCodexConfigBlock(agents, hookCommands);
   mergeCodexConfig(configPath, gsdBlock);
 
   return agents.length;
@@ -1426,6 +1431,10 @@ function verifyFileInstalled(filePath, description) {
   return true;
 }
 
+function buildCodexHookCommand(targetDir, hookName) {
+  return ['node', path.join(targetDir, 'hooks', hookName).replace(/\\/g, '/')];
+}
+
 /**
  * Install to the specified directory for a specific runtime
  * @param {boolean} isGlobal - Whether to install globally or locally
@@ -1754,7 +1763,9 @@ function install(isGlobal, runtime = 'claude') {
 
     // Copy hooks from dist/ (bundled with dependencies)
     // Template paths for the target runtime (replaces '.claude' with correct config dir)
-    const hooksSrc = path.join(src, 'hooks', 'dist');
+    const hooksSrc = fs.existsSync(path.join(src, 'hooks', 'dist'))
+      ? path.join(src, 'hooks', 'dist')
+      : path.join(src, 'hooks');
     if (fs.existsSync(hooksSrc)) {
       const hooksDest = path.join(targetDir, 'hooks');
       fs.mkdirSync(hooksDest, { recursive: true });
@@ -1776,6 +1787,28 @@ function install(isGlobal, runtime = 'claude') {
       }
       if (verifyInstalled(hooksDest, 'hooks')) {
         console.log(`  ${green}✓${reset} Installed hooks (bundled)`);
+      } else {
+        failures.push('hooks');
+      }
+    }
+  }
+
+  if (isCodex) {
+    const hooksSrc = fs.existsSync(path.join(src, 'hooks', 'dist'))
+      ? path.join(src, 'hooks', 'dist')
+      : path.join(src, 'hooks');
+    if (fs.existsSync(hooksSrc)) {
+      const hooksDest = path.join(targetDir, 'hooks');
+      fs.mkdirSync(hooksDest, { recursive: true });
+      const hookEntries = fs.readdirSync(hooksSrc);
+      for (const entry of hookEntries) {
+        const srcFile = path.join(hooksSrc, entry);
+        if (fs.statSync(srcFile).isFile()) {
+          fs.copyFileSync(srcFile, path.join(hooksDest, entry));
+        }
+      }
+      if (verifyInstalled(hooksDest, 'hooks')) {
+        console.log(`  ${green}✓${reset} Installed hooks`);
       } else {
         failures.push('hooks');
       }

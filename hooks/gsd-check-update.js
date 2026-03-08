@@ -10,20 +10,24 @@ const { spawn } = require('child_process');
 const homeDir = os.homedir();
 const cwd = process.cwd();
 
-// Detect runtime config directory (supports Claude, OpenCode, Gemini)
-// Respects CLAUDE_CONFIG_DIR for custom config directory setups
+// Detect runtime config directory (supports Claude, OpenCode, Gemini, Codex)
+// Respects CLAUDE_CONFIG_DIR / CODEX_HOME for custom config directory setups
 function detectConfigDir(baseDir) {
-  // Check env override first (supports multi-account setups)
-  const envDir = process.env.CLAUDE_CONFIG_DIR;
-  if (envDir && fs.existsSync(path.join(envDir, 'get-shit-done', 'VERSION'))) {
-    return envDir;
+  const envCandidates = [
+    process.env.CODEX_HOME,
+    process.env.CLAUDE_CONFIG_DIR,
+  ].filter(Boolean);
+  for (const envDir of envCandidates) {
+    if (fs.existsSync(path.join(envDir, 'get-shit-done', 'VERSION'))) {
+      return envDir;
+    }
   }
-  for (const dir of ['.config/opencode', '.opencode', '.gemini', '.claude']) {
+  for (const dir of ['.config/opencode', '.opencode', '.gemini', '.codex', '.claude']) {
     if (fs.existsSync(path.join(baseDir, dir, 'get-shit-done', 'VERSION'))) {
       return path.join(baseDir, dir);
     }
   }
-  return envDir || path.join(baseDir, '.claude');
+  return process.env.CODEX_HOME || process.env.CLAUDE_CONFIG_DIR || path.join(baseDir, '.claude');
 }
 
 const globalConfigDir = detectConfigDir(homeDir);
