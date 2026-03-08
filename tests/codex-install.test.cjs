@@ -45,6 +45,7 @@ describe('Codex installer integration', () => {
     const versionPath = path.join(codexDir, 'get-shit-done', 'VERSION');
     const skillsDir = path.join(codexDir, 'skills');
     const agentsDir = path.join(codexDir, 'agents');
+    const hooksDir = path.join(codexDir, 'hooks');
     const helpSkillPath = path.join(skillsDir, 'gsd-help', 'SKILL.md');
     const executorTomlPath = path.join(agentsDir, 'gsd-executor.toml');
 
@@ -53,7 +54,8 @@ describe('Codex installer integration', () => {
     assert.ok(fs.existsSync(versionPath), 'VERSION exists');
     assert.ok(fs.existsSync(helpSkillPath), 'help skill exists');
     assert.ok(fs.existsSync(executorTomlPath), 'executor toml exists');
-    assert.ok(!fs.existsSync(path.join(codexDir, 'hooks')), 'Codex install does not create hooks/');
+    assert.ok(fs.existsSync(path.join(hooksDir, 'gsd-check-update.js')), 'check-update hook exists');
+    assert.ok(fs.existsSync(path.join(hooksDir, 'gsd-context-monitor.js')), 'context-monitor hook exists');
     assert.ok(!fs.existsSync(path.join(codexDir, 'package.json')), 'Codex install does not write package.json');
 
     const config = fs.readFileSync(configPath, 'utf8');
@@ -64,6 +66,11 @@ describe('Codex installer integration', () => {
     assert.ok(config.includes('[agents.gsd-executor]'), 'config contains executor agent');
     assert.ok(config.includes('multi_agent = true'), 'config includes multi_agent');
     assert.ok(config.includes('default_mode_request_user_input = true'), 'config includes request_user_input flag');
+    assert.ok(config.includes('[[hooks.session_start]]'), 'config includes session_start hook');
+    assert.ok(config.includes('[[hooks.tool_use_complete]]'), 'config includes tool_use_complete hook');
+    assert.ok(config.includes('[[hooks.tool_use_failure]]'), 'config includes tool_use_failure hook');
+    assert.ok(config.includes('gsd-check-update.js'), 'config references update hook');
+    assert.ok(config.includes('gsd-context-monitor.js'), 'config references context monitor hook');
     assert.ok(!config.includes('~/.claude'), 'config has no leaked Claude path');
     assert.ok(!config.includes('__GSD_'), 'config has no unresolved runtime tokens');
 
@@ -119,5 +126,6 @@ describe('Codex installer integration', () => {
     assert.ok(!fs.existsSync(path.join(codexHome, 'get-shit-done')), 'uninstall removes get-shit-done directory');
     assert.ok(!fs.existsSync(path.join(codexHome, 'skills', 'gsd-help')), 'uninstall removes Codex skills');
     assert.ok(!fs.existsSync(path.join(codexHome, 'agents', 'gsd-executor.toml')), 'uninstall removes agent toml files');
+    assert.ok(!fs.existsSync(path.join(codexHome, 'hooks', 'gsd-check-update.js')), 'uninstall removes Codex hooks');
   });
 });

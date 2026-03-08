@@ -18,6 +18,12 @@ function runNpm(args, options = {}) {
   });
 }
 
+function parseTrailingJsonArray(output) {
+  const match = output.match(/(?:^|\n)(\[\n[\s\S]*\n\])\s*$/);
+  const json = match ? match[1] : output;
+  return JSON.parse(json);
+}
+
 describe('Codex packaged artifact smoke test', () => {
   let tmpRoot;
 
@@ -36,7 +42,7 @@ describe('Codex packaged artifact smoke test', () => {
     fs.mkdirSync(projectDir, { recursive: true });
 
     const packOutput = runNpm(['pack', '--json', '--pack-destination', packDir]);
-    const packInfo = JSON.parse(packOutput)[0];
+    const packInfo = parseTrailingJsonArray(packOutput)[0];
     const tarballPath = path.join(packDir, packInfo.filename);
 
     assert.ok(fs.existsSync(tarballPath), 'tarball exists');
@@ -57,9 +63,11 @@ describe('Codex packaged artifact smoke test', () => {
     const codexDir = path.join(projectDir, '.codex');
     const configPath = path.join(codexDir, 'config.toml');
     const skillPath = path.join(codexDir, 'skills', 'gsd-help', 'SKILL.md');
+    const hookPath = path.join(codexDir, 'hooks', 'gsd-check-update.js');
 
     assert.ok(fs.existsSync(configPath), 'packed artifact installs Codex config');
     assert.ok(fs.existsSync(skillPath), 'packed artifact installs Codex skills');
+    assert.ok(fs.existsSync(hookPath), 'packed artifact installs Codex hooks');
 
     const skillContent = fs.readFileSync(skillPath, 'utf8');
     assert.ok(skillContent.includes('$gsd-help'), 'packed artifact installs Codex skill syntax');

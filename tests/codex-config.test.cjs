@@ -266,6 +266,18 @@ describe('generateCodexConfigBlock', () => {
     assert.ok(result.includes('config_file = "agents/gsd-executor.toml"'), 'has executor config_file');
     assert.ok(result.includes('"Executes plans"'), 'has executor description');
   });
+
+  test('includes managed hook sections when commands are provided', () => {
+    const result = generateCodexConfigBlock(agents, {
+      session_start: ['node', '/tmp/gsd-check-update.js'],
+      tool_use_complete: ['node', '/tmp/gsd-context-monitor.js'],
+      tool_use_failure: ['node', '/tmp/gsd-context-monitor.js'],
+    });
+    assert.ok(result.includes('[[hooks.session_start]]'), 'has session_start hook');
+    assert.ok(result.includes('[[hooks.tool_use_complete]]'), 'has tool_use_complete hook');
+    assert.ok(result.includes('[[hooks.tool_use_failure]]'), 'has tool_use_failure hook');
+    assert.ok(result.includes('"/tmp/gsd-check-update.js"'), 'references update hook path');
+  });
 });
 
 // ─── stripGsdFromCodexConfig ────────────────────────────────────────────────────

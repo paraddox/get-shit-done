@@ -1,6 +1,6 @@
 # Context Window Monitor
 
-> Status: supported for Claude Code and Gemini CLI. Codex installs do not currently register these hooks or statusline integrations.
+> Status: supported for Claude Code and Gemini CLI. Codex installs now register native hook commands, but Codex still has no statusline equivalent, so context monitoring remains best-effort there.
 
 A post-tool hook (`PostToolUse` for Claude Code, `AfterTool` for Gemini CLI) that warns the agent when context window usage is high.
 
@@ -62,10 +62,11 @@ GSD's `/gsd:pause-work` command saves execution state. The WARNING message sugge
 
 ## Setup
 
-Both hooks are automatically registered during `npx get-shit-done-cc` installation:
+The hooks are automatically registered during `npx get-shit-done-cc` installation:
 
-- **Statusline** (writes bridge file): Registered as `statusLine` in settings.json
+- **Statusline** (writes bridge file): Registered as `statusLine` in settings.json for Claude Code / Gemini-style runtimes
 - **Context Monitor** (reads bridge file): Registered as `PostToolUse` hook in settings.json (`AfterTool` for Gemini)
+- **Codex**: installs native `session_start`, `tool_use_complete`, and `tool_use_failure` hooks in `.codex/config.toml`
 
 Manual registration in `~/.claude/settings.json` (Claude Code):
 

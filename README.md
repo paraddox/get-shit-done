@@ -96,7 +96,8 @@ Verify with:
 - Codex commands are invoked as skills: `$gsd-new-project`, `$gsd-plan-phase`, `$gsd-execute-phase`, etc.
 - Global Codex install location resolves as: `--config-dir` → `CODEX_HOME` → `~/.codex/`
 - GSD writes a managed block into `.codex/config.toml` and preserves non-GSD sections on reinstall/uninstall.
-- Codex installs do **not** configure `settings.json`, statusline, or hook integrations. Those are currently Claude/Gemini-only.
+- Codex installs configure native Codex hooks in `.codex/config.toml` for update checking and post-tool context monitoring.
+- Codex still does **not** configure `settings.json` or a statusline equivalent.
 
 ### Staying Updated
 
