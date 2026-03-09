@@ -575,7 +575,7 @@ Switch profiles:
 
 Or configure via `/gsd:settings`.
 
-For Codex installs, Haiku-class agents are generated with `gpt-5.3-codex-spark` and `xhigh` reasoning.
+For Codex installs, serious-work agents are generated with `gpt-5.4` and `high` reasoning. Lightweight Haiku-default roles use `gpt-5.3-codex-spark` with `xhigh` reasoning.
 
 ### Workflow Agents
 

@@ -35,6 +35,11 @@ const CODEX_HAIKU_EQUIVALENT = {
   model_reasoning_effort: 'xhigh',
 };
 
+const CODEX_SERIOUS_EQUIVALENT = {
+  model: 'gpt-5.4',
+  model_reasoning_effort: 'high',
+};
+
 // ─── Output helpers ───────────────────────────────────────────────────────────
 
 function output(result, raw, rawValue) {
@@ -390,10 +395,12 @@ function resolveCodexRoleModelConfig(agentType) {
   const agentModels = MODEL_PROFILES[agentType];
   if (!agentModels) return null;
 
-  const usesHaikuTier = Object.values(agentModels).includes('haiku');
-  if (!usesHaikuTier) return null;
+  const balancedTier = agentModels.balanced || agentModels.quality || agentModels.budget;
+  if (balancedTier === 'haiku') {
+    return { ...CODEX_HAIKU_EQUIVALENT };
+  }
 
-  return { ...CODEX_HAIKU_EQUIVALENT };
+  return { ...CODEX_SERIOUS_EQUIVALENT };
 }
 
 // ─── Misc utilities ───────────────────────────────────────────────────────────
@@ -486,6 +493,7 @@ function getMilestonePhaseFilter(cwd) {
 module.exports = {
   MODEL_PROFILES,
   CODEX_HAIKU_EQUIVALENT,
+  CODEX_SERIOUS_EQUIVALENT,
   output,
   error,
   safeReadFile,

@@ -1,6 +1,6 @@
 # Model Profiles
 
-Model profiles control which model tier each GSD agent uses. For Claude runtimes this maps to Opus/Sonnet/Haiku; for Codex, Haiku-class agents map to `gpt-5.3-codex-spark` with `xhigh` reasoning.
+Model profiles control which model tier each GSD agent uses. For Claude runtimes this maps to Opus/Sonnet/Haiku; for Codex, serious-work roles map to `gpt-5.4` with `high` reasoning, while lightweight Haiku-default roles map to `gpt-5.3-codex-spark` with `xhigh` reasoning.
 
 ## Profile Definitions
 
@@ -38,10 +38,12 @@ Model profiles control which model tier each GSD agent uses. For Claude runtimes
 - Use when: conserving quota, high-volume work, less critical phases
 
 **Codex note**
-- Agents that use `haiku` anywhere in the Claude profile table are generated with:
+- Serious-work roles are generated with:
+  - `model = "gpt-5.4"`
+  - `model_reasoning_effort = "high"`
+- Lightweight roles whose balanced/default tier is Haiku are generated with:
   - `model = "gpt-5.3-codex-spark"`
   - `model_reasoning_effort = "xhigh"`
-- Other Codex agents inherit the user's main Codex model unless explicitly configured otherwise.
 
 ## Resolution Logic
 

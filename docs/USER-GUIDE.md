@@ -337,8 +337,8 @@ Disable these to speed up phases in familiar domains or when conserving tokens.
 - **budget** -- Sonnet for anything that writes code, Haiku for research and verification. Use for high-volume work or less critical phases.
 
 **Codex note:**
-- Haiku-class agents are generated with `gpt-5.3-codex-spark` and `xhigh` reasoning effort.
-- Other Codex agents inherit the user's main Codex model unless explicitly configured otherwise.
+- Serious-work agents are generated with `gpt-5.4` and `high` reasoning effort.
+- Lightweight Haiku-default roles are generated with `gpt-5.3-codex-spark` and `xhigh` reasoning effort.
 
 ---
 

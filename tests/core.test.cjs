@@ -17,6 +17,7 @@ const {
   resolveCodexRoleModelConfig,
   MODEL_PROFILES,
   CODEX_HAIKU_EQUIVALENT,
+  CODEX_SERIOUS_EQUIVALENT,
   escapeRegex,
   generateSlugInternal,
   normalizePhaseName,
@@ -208,25 +209,30 @@ describe('resolveModelInternal', () => {
 // ─── resolveCodexRoleModelConfig ──────────────────────────────────────────────
 
 describe('resolveCodexRoleModelConfig', () => {
-  test('maps Haiku-class agents to Codex spark xhigh', () => {
-    assert.deepStrictEqual(
-      resolveCodexRoleModelConfig('gsd-phase-researcher'),
-      CODEX_HAIKU_EQUIVALENT
-    );
+  test('maps balanced Haiku-tier agents to Codex spark xhigh', () => {
     assert.deepStrictEqual(
       resolveCodexRoleModelConfig('gsd-codebase-mapper'),
       CODEX_HAIKU_EQUIVALENT
     );
-    assert.deepStrictEqual(
-      resolveCodexRoleModelConfig('gsd-verifier'),
-      CODEX_HAIKU_EQUIVALENT
-    );
   });
 
-  test('returns null for non-Haiku-class agents', () => {
-    assert.strictEqual(resolveCodexRoleModelConfig('gsd-executor'), null);
-    assert.strictEqual(resolveCodexRoleModelConfig('gsd-planner'), null);
-    assert.strictEqual(resolveCodexRoleModelConfig('gsd-roadmapper'), null);
+  test('maps serious-work agents to gpt-5.4 high', () => {
+    assert.deepStrictEqual(
+      resolveCodexRoleModelConfig('gsd-phase-researcher'),
+      CODEX_SERIOUS_EQUIVALENT
+    );
+    assert.deepStrictEqual(
+      resolveCodexRoleModelConfig('gsd-executor'),
+      CODEX_SERIOUS_EQUIVALENT
+    );
+    assert.deepStrictEqual(
+      resolveCodexRoleModelConfig('gsd-verifier'),
+      CODEX_SERIOUS_EQUIVALENT
+    );
+    assert.deepStrictEqual(
+      resolveCodexRoleModelConfig('gsd-planner'),
+      CODEX_SERIOUS_EQUIVALENT
+    );
   });
 
   test('returns null for unknown agents', () => {

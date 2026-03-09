@@ -49,6 +49,7 @@ describe('Codex installer integration', () => {
     const helpSkillPath = path.join(skillsDir, 'gsd-help', 'SKILL.md');
     const executorTomlPath = path.join(agentsDir, 'gsd-executor.toml');
     const researcherTomlPath = path.join(agentsDir, 'gsd-phase-researcher.toml');
+    const mapperTomlPath = path.join(agentsDir, 'gsd-codebase-mapper.toml');
 
     assert.ok(fs.existsSync(configPath), 'config.toml exists');
     assert.ok(fs.existsSync(manifestPath), 'manifest exists');
@@ -56,6 +57,7 @@ describe('Codex installer integration', () => {
     assert.ok(fs.existsSync(helpSkillPath), 'help skill exists');
     assert.ok(fs.existsSync(executorTomlPath), 'executor toml exists');
     assert.ok(fs.existsSync(researcherTomlPath), 'researcher toml exists');
+    assert.ok(fs.existsSync(mapperTomlPath), 'mapper toml exists');
     assert.ok(fs.existsSync(path.join(hooksDir, 'gsd-check-update.js')), 'check-update hook exists');
     assert.ok(fs.existsSync(path.join(hooksDir, 'gsd-context-monitor.js')), 'context-monitor hook exists');
     assert.ok(!fs.existsSync(path.join(codexDir, 'package.json')), 'Codex install does not write package.json');
@@ -65,6 +67,7 @@ describe('Codex installer integration', () => {
     const helpSkill = fs.readFileSync(helpSkillPath, 'utf8');
     const executorToml = fs.readFileSync(executorTomlPath, 'utf8');
     const researcherToml = fs.readFileSync(researcherTomlPath, 'utf8');
+    const mapperToml = fs.readFileSync(mapperTomlPath, 'utf8');
 
     assert.ok(config.includes('[agents.gsd-executor]'), 'config contains executor agent');
     assert.ok(config.includes('multi_agent = true'), 'config includes multi_agent');
@@ -85,10 +88,14 @@ describe('Codex installer integration', () => {
     assert.ok(executorToml.includes('sandbox_mode = "workspace-write"'), 'executor toml has workspace-write');
     assert.ok(!executorToml.includes('~/.claude'), 'executor toml has no leaked Claude path');
     assert.ok(!executorToml.includes('__GSD_'), 'executor toml has no unresolved runtime tokens');
-    assert.ok(!executorToml.includes('gpt-5.3-codex-spark'), 'executor toml keeps inherited model');
+    assert.ok(executorToml.includes('model = "gpt-5.4"'), 'executor toml uses gpt-5.4');
+    assert.ok(executorToml.includes('model_reasoning_effort = "high"'), 'executor toml uses high reasoning');
 
-    assert.ok(researcherToml.includes('model = "gpt-5.3-codex-spark"'), 'researcher toml uses codex spark');
-    assert.ok(researcherToml.includes('model_reasoning_effort = "xhigh"'), 'researcher toml uses xhigh reasoning');
+    assert.ok(researcherToml.includes('model = "gpt-5.4"'), 'researcher toml uses gpt-5.4');
+    assert.ok(researcherToml.includes('model_reasoning_effort = "high"'), 'researcher toml uses high reasoning');
+
+    assert.ok(mapperToml.includes('model = "gpt-5.3-codex-spark"'), 'mapper toml uses codex spark');
+    assert.ok(mapperToml.includes('model_reasoning_effort = "xhigh"'), 'mapper toml uses xhigh reasoning');
 
     assert.ok(
       Object.keys(manifest.files).some(file => file.startsWith('skills/gsd-help/')),

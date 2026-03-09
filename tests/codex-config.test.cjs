@@ -199,7 +199,7 @@ tools: Read, Grep, Glob
     assert.ok(result.includes('"""'), 'has closing triple quotes');
   });
 
-  test('maps Haiku-class agents to codex-spark xhigh', () => {
+  test('maps serious-work agents to gpt-5.4 high', () => {
     const researcher = `---
 name: gsd-phase-researcher
 description: Researches a phase
@@ -208,14 +208,27 @@ tools: Read, Bash
 
 <role>You research phases.</role>`;
     const result = generateCodexAgentToml('gsd-phase-researcher', researcher);
+    assert.ok(result.includes('model = "gpt-5.4"'), 'uses gpt-5.4');
+    assert.ok(result.includes('model_reasoning_effort = "high"'), 'uses high reasoning');
+  });
+
+  test('maps lightweight Haiku-tier agents to codex-spark xhigh', () => {
+    const mapper = `---
+name: gsd-codebase-mapper
+description: Maps codebases
+tools: Read, Bash
+---
+
+<role>You map codebases.</role>`;
+    const result = generateCodexAgentToml('gsd-codebase-mapper', mapper);
     assert.ok(result.includes('model = "gpt-5.3-codex-spark"'), 'uses codex spark');
     assert.ok(result.includes('model_reasoning_effort = "xhigh"'), 'uses xhigh reasoning');
   });
 
-  test('does not add codex-spark mapping for non-Haiku-class agents', () => {
+  test('adds gpt-5.4 high mapping for executor-class agents', () => {
     const result = generateCodexAgentToml('gsd-executor', sampleAgent);
-    assert.ok(!result.includes('gpt-5.3-codex-spark'), 'executor keeps inherited model');
-    assert.ok(!result.includes('model_reasoning_effort = "xhigh"'), 'executor keeps inherited reasoning');
+    assert.ok(result.includes('model = "gpt-5.4"'), 'executor uses gpt-5.4');
+    assert.ok(result.includes('model_reasoning_effort = "high"'), 'executor uses high reasoning');
   });
 
   test('defaults unknown agents to read-only', () => {
