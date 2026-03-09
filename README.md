@@ -560,7 +560,7 @@ GSD stores project settings in `.planning/config.json`. Configure during `/gsd:n
 
 ### Model Profiles
 
-Control which Claude model each agent uses. Balance quality vs token spend.
+Control which model tier each agent uses. Balance quality vs token spend.
 
 | Profile | Planning | Execution | Verification |
 |---------|----------|-----------|--------------|
@@ -574,6 +574,8 @@ Switch profiles:
 ```
 
 Or configure via `/gsd:settings`.
+
+For Codex installs, Haiku-class agents are generated with `gpt-5.3-codex-spark` and `xhigh` reasoning.
 
 ### Workflow Agents
 

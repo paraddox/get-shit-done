@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs');
+const { resolveCodexRoleModelConfig } = require('../../get-shit-done/bin/lib/core.cjs');
 const {
   toSingleLine,
   yamlQuote,
@@ -125,15 +126,19 @@ purpose: ${toSingleLine(description)}
 
 function generateCodexAgentToml(agentName, agentContent) {
   const sandboxMode = CODEX_AGENT_SANDBOX[agentName] || 'read-only';
+  const modelConfig = resolveCodexRoleModelConfig(agentName);
   const { body } = extractFrontmatterAndBody(agentContent);
   const instructions = body.trim();
 
-  const lines = [
-    `sandbox_mode = "${sandboxMode}"`,
-    'developer_instructions = """',
-    instructions,
-    '"""',
-  ];
+  const lines = [];
+  if (modelConfig) {
+    lines.push(`model = "${modelConfig.model}"`);
+    lines.push(`model_reasoning_effort = "${modelConfig.model_reasoning_effort}"`);
+  }
+  lines.push(`sandbox_mode = "${sandboxMode}"`);
+  lines.push('developer_instructions = """');
+  lines.push(instructions);
+  lines.push('"""');
   return lines.join('\n') + '\n';
 }
 

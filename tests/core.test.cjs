@@ -14,7 +14,9 @@ const os = require('os');
 const {
   loadConfig,
   resolveModelInternal,
+  resolveCodexRoleModelConfig,
   MODEL_PROFILES,
+  CODEX_HAIKU_EQUIVALENT,
   escapeRegex,
   generateSlugInternal,
   normalizePhaseName,
@@ -200,6 +202,35 @@ describe('resolveModelInternal', () => {
       // balanced profile, gsd-planner -> opus -> inherit
       assert.strictEqual(resolveModelInternal(tmpDir, 'gsd-planner'), 'inherit');
     });
+  });
+});
+
+// ─── resolveCodexRoleModelConfig ──────────────────────────────────────────────
+
+describe('resolveCodexRoleModelConfig', () => {
+  test('maps Haiku-class agents to Codex spark xhigh', () => {
+    assert.deepStrictEqual(
+      resolveCodexRoleModelConfig('gsd-phase-researcher'),
+      CODEX_HAIKU_EQUIVALENT
+    );
+    assert.deepStrictEqual(
+      resolveCodexRoleModelConfig('gsd-codebase-mapper'),
+      CODEX_HAIKU_EQUIVALENT
+    );
+    assert.deepStrictEqual(
+      resolveCodexRoleModelConfig('gsd-verifier'),
+      CODEX_HAIKU_EQUIVALENT
+    );
+  });
+
+  test('returns null for non-Haiku-class agents', () => {
+    assert.strictEqual(resolveCodexRoleModelConfig('gsd-executor'), null);
+    assert.strictEqual(resolveCodexRoleModelConfig('gsd-planner'), null);
+    assert.strictEqual(resolveCodexRoleModelConfig('gsd-roadmapper'), null);
+  });
+
+  test('returns null for unknown agents', () => {
+    assert.strictEqual(resolveCodexRoleModelConfig('gsd-unknown'), null);
   });
 });
 

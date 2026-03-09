@@ -336,6 +336,10 @@ Disable these to speed up phases in familiar domains or when conserving tokens.
 - **balanced** -- Opus only for planning (where architecture decisions happen), Sonnet for everything else. The default for good reason.
 - **budget** -- Sonnet for anything that writes code, Haiku for research and verification. Use for high-volume work or less critical phases.
 
+**Codex note:**
+- Haiku-class agents are generated with `gpt-5.3-codex-spark` and `xhigh` reasoning effort.
+- Other Codex agents inherit the user's main Codex model unless explicitly configured otherwise.
+
 ---
 
 ## Usage Examples

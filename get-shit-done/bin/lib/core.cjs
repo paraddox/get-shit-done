@@ -30,6 +30,11 @@ const MODEL_PROFILES = {
   'gsd-nyquist-auditor':      { quality: 'sonnet', balanced: 'sonnet', budget: 'haiku' },
 };
 
+const CODEX_HAIKU_EQUIVALENT = {
+  model: 'gpt-5.3-codex-spark',
+  model_reasoning_effort: 'xhigh',
+};
+
 // ─── Output helpers ───────────────────────────────────────────────────────────
 
 function output(result, raw, rawValue) {
@@ -381,6 +386,16 @@ function resolveModelInternal(cwd, agentType) {
   return resolved === 'opus' ? 'inherit' : resolved;
 }
 
+function resolveCodexRoleModelConfig(agentType) {
+  const agentModels = MODEL_PROFILES[agentType];
+  if (!agentModels) return null;
+
+  const usesHaikuTier = Object.values(agentModels).includes('haiku');
+  if (!usesHaikuTier) return null;
+
+  return { ...CODEX_HAIKU_EQUIVALENT };
+}
+
 // ─── Misc utilities ───────────────────────────────────────────────────────────
 
 function pathExistsInternal(cwd, targetPath) {
@@ -470,6 +485,7 @@ function getMilestonePhaseFilter(cwd) {
 
 module.exports = {
   MODEL_PROFILES,
+  CODEX_HAIKU_EQUIVALENT,
   output,
   error,
   safeReadFile,
@@ -484,6 +500,7 @@ module.exports = {
   getArchivedPhaseDirs,
   getRoadmapPhaseInternal,
   resolveModelInternal,
+  resolveCodexRoleModelConfig,
   pathExistsInternal,
   generateSlugInternal,
   getMilestoneInfo,

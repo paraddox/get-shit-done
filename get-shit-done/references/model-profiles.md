@@ -1,6 +1,6 @@
 # Model Profiles
 
-Model profiles control which Claude model each GSD agent uses. This allows balancing quality vs token spend.
+Model profiles control which model tier each GSD agent uses. For Claude runtimes this maps to Opus/Sonnet/Haiku; for Codex, Haiku-class agents map to `gpt-5.3-codex-spark` with `xhigh` reasoning.
 
 ## Profile Definitions
 
@@ -32,10 +32,16 @@ Model profiles control which Claude model each GSD agent uses. This allows balan
 - Sonnet for verification (needs reasoning, not just pattern matching)
 - Use when: normal development, good balance of quality and cost
 
-**budget** - Minimal Opus usage
+**budget** - Minimal top-tier usage
 - Sonnet for anything that writes code
 - Haiku for research and verification
 - Use when: conserving quota, high-volume work, less critical phases
+
+**Codex note**
+- Agents that use `haiku` anywhere in the Claude profile table are generated with:
+  - `model = "gpt-5.3-codex-spark"`
+  - `model_reasoning_effort = "xhigh"`
+- Other Codex agents inherit the user's main Codex model unless explicitly configured otherwise.
 
 ## Resolution Logic
 
