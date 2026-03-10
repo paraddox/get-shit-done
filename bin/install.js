@@ -457,8 +457,6 @@ function installCodexConfig(targetDir, agentsSrc) {
 
   const hookCommands = {
     session_start: buildCodexHookCommand(targetDir, 'gsd-check-update.js'),
-    tool_use_complete: buildCodexHookCommand(targetDir, 'gsd-context-monitor.js'),
-    tool_use_failure: buildCodexHookCommand(targetDir, 'gsd-context-monitor.js'),
   };
   const gsdBlock = generateCodexConfigBlock(agents, hookCommands);
   mergeCodexConfig(configPath, gsdBlock);

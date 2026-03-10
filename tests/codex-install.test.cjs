@@ -73,10 +73,9 @@ describe('Codex installer integration', () => {
     assert.ok(config.includes('multi_agent = true'), 'config includes multi_agent');
     assert.ok(config.includes('default_mode_request_user_input = true'), 'config includes request_user_input flag');
     assert.ok(config.includes('[[hooks.session_start]]'), 'config includes session_start hook');
-    assert.ok(config.includes('[[hooks.tool_use_complete]]'), 'config includes tool_use_complete hook');
-    assert.ok(config.includes('[[hooks.tool_use_failure]]'), 'config includes tool_use_failure hook');
     assert.ok(config.includes('gsd-check-update.js'), 'config references update hook');
-    assert.ok(config.includes('gsd-context-monitor.js'), 'config references context monitor hook');
+    assert.ok(!config.includes('[[hooks.tool_use_complete]]'), 'config does not include unsupported context-monitor hooks');
+    assert.ok(!config.includes('[[hooks.tool_use_failure]]'), 'config does not include unsupported failed-tool hooks');
     assert.ok(!config.includes('~/.claude'), 'config has no leaked Claude path');
     assert.ok(!config.includes('__GSD_'), 'config has no unresolved runtime tokens');
 

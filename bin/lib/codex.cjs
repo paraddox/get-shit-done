@@ -164,8 +164,19 @@ function generateCodexConfigBlock(agents, hookCommands = {}) {
 
   const hookOrder = [
     'session_start',
-    'tool_use_complete',
+    'session_end',
+    'approval_requested',
+    'user_prompt_submit',
+    'pre_tool_use',
     'tool_use_failure',
+    'subagent_start',
+    'subagent_stop',
+    'compact_start',
+    'agent_turn_error',
+    'notification',
+    'config_changed',
+    'agent_turn_complete',
+    'tool_use_complete',
   ];
   for (const hookName of hookOrder) {
     const command = hookCommands[hookName];

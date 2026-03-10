@@ -70,7 +70,10 @@ describe('Codex packaged artifact smoke test', () => {
     assert.ok(fs.existsSync(hookPath), 'packed artifact installs Codex hooks');
 
     const skillContent = fs.readFileSync(skillPath, 'utf8');
+    const configContent = fs.readFileSync(configPath, 'utf8');
     assert.ok(skillContent.includes('$gsd-help'), 'packed artifact installs Codex skill syntax');
     assert.ok(!skillContent.includes('__GSD_'), 'packed artifact resolves runtime tokens');
+    assert.ok(configContent.includes('[[hooks.session_start]]'), 'packed artifact installs session_start hook');
+    assert.ok(!configContent.includes('[[hooks.tool_use_complete]]'), 'packed artifact omits unsupported Codex context-monitor hooks');
   });
 });

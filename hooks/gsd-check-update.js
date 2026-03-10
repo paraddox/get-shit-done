@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Check for GSD updates in background, write result to cache
-// Called by SessionStart hook - runs once per session
+// Check for GSD updates in background, write result to cache.
+// For Codex session_start hooks, also surface cached update availability into
+// the first turn via structured session-start output.
 
 const fs = require('fs');
 const path = require('path');
@@ -44,8 +45,45 @@ if (!fs.existsSync(cacheDir)) {
   fs.mkdirSync(cacheDir, { recursive: true });
 }
 
-// Run check in background (spawn background process, windowsHide prevents console flash)
-const child = spawn(process.execPath, ['-e', `
+function readInstalledVersion() {
+  try {
+    if (fs.existsSync(projectVersionFile)) {
+      return fs.readFileSync(projectVersionFile, 'utf8').trim() || '0.0.0';
+    }
+    if (fs.existsSync(globalVersionFile)) {
+      return fs.readFileSync(globalVersionFile, 'utf8').trim() || '0.0.0';
+    }
+  } catch (_) {}
+  return '0.0.0';
+}
+
+function readUpdateCache() {
+  try {
+    if (!fs.existsSync(cacheFile)) return null;
+    return JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+  } catch (_) {
+    return null;
+  }
+}
+
+function buildCodexSessionStartOutput(cache) {
+  if (!cache || !cache.update_available || !cache.latest || cache.latest === 'unknown') {
+    return null;
+  }
+
+  return {
+    continue: true,
+    hookSpecificOutput: {
+      hookEventName: 'SessionStart',
+      additionalContext:
+        `GSD update available: installed ${cache.installed}, latest ${cache.latest}. ` +
+        'Use `$gsd-update` if you want the latest workflows and prompts before starting substantial new work.'
+    }
+  };
+}
+
+function runBackgroundCheck() {
+  const child = spawn(process.execPath, ['-e', `
   const fs = require('fs');
   const { execSync } = require('child_process');
 
@@ -77,9 +115,51 @@ const child = spawn(process.execPath, ['-e', `
 
   fs.writeFileSync(cacheFile, JSON.stringify(result));
 `], {
-  stdio: 'ignore',
-  windowsHide: true,
-  detached: true  // Required on Windows for proper process detachment
-});
+    stdio: 'ignore',
+    windowsHide: true,
+    detached: true  // Required on Windows for proper process detachment
+  });
 
-child.unref();
+  child.unref();
+}
+
+let input = '';
+let finalized = false;
+
+function finish() {
+  if (finalized) return;
+  finalized = true;
+
+  let parsed = null;
+  try {
+    parsed = input.trim() ? JSON.parse(input) : null;
+  } catch (_) {}
+
+  const isCodexSessionStart =
+    parsed &&
+    parsed.hook_event_name === 'SessionStart' &&
+    typeof parsed.session_id === 'string' &&
+    typeof parsed.cwd === 'string';
+
+  if (isCodexSessionStart) {
+    const cache = readUpdateCache() || {
+      update_available: false,
+      installed: readInstalledVersion(),
+      latest: 'unknown',
+    };
+    const output = buildCodexSessionStartOutput(cache);
+    if (output) {
+      process.stdout.write(JSON.stringify(output));
+    }
+  }
+
+  runBackgroundCheck();
+}
+
+const stdinTimeout = setTimeout(finish, 3000);
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', chunk => input += chunk);
+process.stdin.on('end', () => {
+  clearTimeout(stdinTimeout);
+  finish();
+});
