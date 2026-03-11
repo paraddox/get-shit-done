@@ -129,6 +129,9 @@ function generateCodexAgentToml(agentName, agentContent) {
   const modelConfig = resolveCodexRoleModelConfig(agentName);
   const { body } = extractFrontmatterAndBody(agentContent);
   const instructions = body.trim();
+  const escapedInstructions = instructions
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"');
 
   const lines = [];
   if (modelConfig) {
@@ -137,7 +140,7 @@ function generateCodexAgentToml(agentName, agentContent) {
   }
   lines.push(`sandbox_mode = "${sandboxMode}"`);
   lines.push('developer_instructions = """');
-  lines.push(instructions);
+  lines.push(escapedInstructions);
   lines.push('"""');
   return lines.join('\n') + '\n';
 }

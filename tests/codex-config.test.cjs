@@ -235,6 +235,23 @@ tools: Read, Bash
     const result = generateCodexAgentToml('gsd-unknown', sampleAgent);
     assert.ok(result.includes('sandbox_mode = "read-only"'), 'defaults to read-only');
   });
+
+  test('escapes backslashes and quotes in developer instructions for TOML', () => {
+    const mapper = `---
+name: gsd-codebase-mapper
+description: Maps codebases
+tools: Read, Bash
+---
+
+\`\`\`bash
+grep -r "import.*stripe\\|import.*supabase" src/
+\`\`\``;
+    const result = generateCodexAgentToml('gsd-codebase-mapper', mapper);
+    assert.ok(
+      result.includes('grep -r \\"import.*stripe\\\\|import.*supabase\\" src/'),
+      'escapes shell snippet for valid TOML'
+    );
+  });
 });
 
 // ─── CODEX_AGENT_SANDBOX mapping ────────────────────────────────────────────────
