@@ -10,6 +10,7 @@ const {
 } = require('./runtime-content.cjs');
 
 const GSD_CODEX_MARKER = '# GSD Agent Configuration — managed by get-shit-done installer';
+const GSD_CODEX_HOOK_COMMAND_BASENAME = 'gsd-check-update.js';
 
 const CODEX_AGENT_SANDBOX = {
   'gsd-executor': 'workspace-write',
@@ -150,6 +151,7 @@ function generateCodexConfigBlock(agents, hookCommands = {}) {
     GSD_CODEX_MARKER,
     '[features]',
     'multi_agent = true',
+    'codex_hooks = true',
     'default_mode_request_user_input = true',
     '',
     '[agents]',
@@ -192,6 +194,121 @@ function generateCodexConfigBlock(agents, hookCommands = {}) {
   return lines.join('\n');
 }
 
+function isGsdCodexSessionStartCommand(command) {
+  return typeof command === 'string' && command.includes(GSD_CODEX_HOOK_COMMAND_BASENAME);
+}
+
+function generateCodexHooksFile(sessionStartCommand) {
+  return JSON.stringify({
+    hooks: {
+      SessionStart: sessionStartCommand
+        ? [
+            {
+              matcher: '^(startup|resume)$',
+              hooks: [
+                {
+                  type: 'command',
+                  command: sessionStartCommand,
+                  timeoutSec: 15,
+                },
+              ],
+            },
+          ]
+        : [],
+      Stop: [],
+    },
+    gsdManaged: true,
+  }, null, 2) + '\n';
+}
+
+function stripGsdFromCodexHooksFile(content) {
+  let parsed;
+  try {
+    parsed = JSON.parse(content);
+  } catch (_) {
+    return content;
+  }
+
+  if (!parsed || typeof parsed !== 'object') return content;
+  const hooks = parsed.hooks && typeof parsed.hooks === 'object' ? parsed.hooks : {};
+  const sessionStart = Array.isArray(hooks.SessionStart) ? hooks.SessionStart : [];
+  const filteredSessionStart = sessionStart
+    .map(group => {
+      if (!group || typeof group !== 'object' || !Array.isArray(group.hooks)) return group;
+      const filteredHooks = group.hooks.filter(hook => !isGsdCodexSessionStartCommand(hook && hook.command));
+      return { ...group, hooks: filteredHooks };
+    })
+    .filter(group => group && (!Array.isArray(group.hooks) || group.hooks.length > 0));
+
+  const next = {
+    ...parsed,
+    hooks: {
+      ...hooks,
+      SessionStart: filteredSessionStart,
+      Stop: Array.isArray(hooks.Stop) ? hooks.Stop : [],
+    },
+  };
+
+  if (filteredSessionStart.length === 0) {
+    delete next.gsdManaged;
+  }
+
+  const hasAnyHooks = Object.values(next.hooks).some(value => Array.isArray(value) && value.length > 0);
+  if (!hasAnyHooks) {
+    return null;
+  }
+
+  return JSON.stringify(next, null, 2) + '\n';
+}
+
+function mergeCodexHooksFile(hooksPath, sessionStartCommand) {
+  const nextContent = generateCodexHooksFile(sessionStartCommand);
+  if (!fs.existsSync(hooksPath)) {
+    fs.writeFileSync(hooksPath, nextContent);
+    return;
+  }
+
+  const existing = fs.readFileSync(hooksPath, 'utf8');
+  const cleaned = stripGsdFromCodexHooksFile(existing);
+  if (cleaned === null) {
+    fs.writeFileSync(hooksPath, nextContent);
+    return;
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch (_) {
+    fs.writeFileSync(hooksPath, nextContent);
+    return;
+  }
+
+  const hooks = parsed.hooks && typeof parsed.hooks === 'object' ? parsed.hooks : {};
+  const sessionStart = Array.isArray(hooks.SessionStart) ? hooks.SessionStart : [];
+  sessionStart.push({
+    matcher: '^(startup|resume)$',
+    hooks: [
+      {
+        type: 'command',
+        command: sessionStartCommand,
+        timeoutSec: 15,
+      },
+    ],
+  });
+
+  const merged = {
+    ...parsed,
+    hooks: {
+      ...hooks,
+      SessionStart: sessionStart,
+      Stop: Array.isArray(hooks.Stop) ? hooks.Stop : [],
+    },
+    gsdManaged: true,
+  };
+
+  fs.writeFileSync(hooksPath, JSON.stringify(merged, null, 2) + '\n');
+}
+
 function stripTopLevelAgentsTable(block) {
   return block.replace(/^\[agents\]\n(?:(?!\[)[^\n]*\n?)*/m, '');
 }
@@ -202,6 +319,7 @@ function stripGsdFromCodexConfig(content) {
   if (markerIndex !== -1) {
     let before = content.substring(0, markerIndex).trimEnd();
     before = before.replace(/^multi_agent\s*=\s*true\s*\n?/m, '');
+    before = before.replace(/^codex_hooks\s*=\s*true\s*\n?/m, '');
     before = before.replace(/^default_mode_request_user_input\s*=\s*true\s*\n?/m, '');
     before = before.replace(/^\[features\]\s*\n(?=\[|$)/m, '');
     before = before.replace(/\n{3,}/g, '\n\n').trim();
@@ -211,6 +329,7 @@ function stripGsdFromCodexConfig(content) {
 
   let cleaned = content;
   cleaned = cleaned.replace(/^multi_agent\s*=\s*true\s*\n?/m, '');
+  cleaned = cleaned.replace(/^codex_hooks\s*=\s*true\s*\n?/m, '');
   cleaned = cleaned.replace(/^default_mode_request_user_input\s*=\s*true\s*\n?/m, '');
   cleaned = cleaned.replace(/^\[agents\.gsd-[^\]]+\]\n(?:(?!\[)[^\n]*\n?)*/gm, '');
   cleaned = cleaned.replace(/^\[features\]\s*\n(?=\[|$)/m, '');
@@ -242,6 +361,9 @@ function mergeCodexConfig(configPath, gsdBlock) {
         if (!before.includes('multi_agent')) {
           before = before.replace(/^\[features\]\s*$/m, '[features]\nmulti_agent = true');
         }
+        if (!before.includes('codex_hooks')) {
+          before = before.replace(/^\[features\].*$/m, '$&\ncodex_hooks = true');
+        }
         if (!before.includes('default_mode_request_user_input')) {
           before = before.replace(/^\[features\].*$/m, '$&\ndefault_mode_request_user_input = true');
         }
@@ -268,6 +390,9 @@ function mergeCodexConfig(configPath, gsdBlock) {
     if (!content.includes('multi_agent')) {
       content = content.replace(featuresRegex, '[features]\nmulti_agent = true');
     }
+    if (!content.includes('codex_hooks')) {
+      content = content.replace(/^\[features\].*$/m, '$&\ncodex_hooks = true');
+    }
     if (!content.includes('default_mode_request_user_input')) {
       content = content.replace(/^\[features\].*$/m, '$&\ndefault_mode_request_user_input = true');
     }
@@ -290,12 +415,16 @@ function mergeCodexConfig(configPath, gsdBlock) {
 module.exports = {
   GSD_CODEX_MARKER,
   CODEX_AGENT_SANDBOX,
+  GSD_CODEX_HOOK_COMMAND_BASENAME,
   convertClaudeToCodexMarkdown,
   getCodexSkillAdapterHeader,
   convertClaudeCommandToCodexSkill,
   convertClaudeAgentToCodexAgent,
   generateCodexAgentToml,
   generateCodexConfigBlock,
+  generateCodexHooksFile,
   stripGsdFromCodexConfig,
+  stripGsdFromCodexHooksFile,
   mergeCodexConfig,
+  mergeCodexHooksFile,
 };

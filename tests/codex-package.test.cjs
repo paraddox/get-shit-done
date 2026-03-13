@@ -62,18 +62,22 @@ describe('Codex packaged artifact smoke test', () => {
 
     const codexDir = path.join(projectDir, '.codex');
     const configPath = path.join(codexDir, 'config.toml');
+    const hooksJsonPath = path.join(codexDir, 'hooks.json');
     const skillPath = path.join(codexDir, 'skills', 'gsd-help', 'SKILL.md');
     const hookPath = path.join(codexDir, 'hooks', 'gsd-check-update.js');
 
     assert.ok(fs.existsSync(configPath), 'packed artifact installs Codex config');
+    assert.ok(fs.existsSync(hooksJsonPath), 'packed artifact installs Codex hooks.json');
     assert.ok(fs.existsSync(skillPath), 'packed artifact installs Codex skills');
     assert.ok(fs.existsSync(hookPath), 'packed artifact installs Codex hooks');
 
     const skillContent = fs.readFileSync(skillPath, 'utf8');
     const configContent = fs.readFileSync(configPath, 'utf8');
+    const hooksJsonContent = fs.readFileSync(hooksJsonPath, 'utf8');
     assert.ok(skillContent.includes('$gsd-help'), 'packed artifact installs Codex skill syntax');
     assert.ok(!skillContent.includes('__GSD_'), 'packed artifact resolves runtime tokens');
-    assert.ok(configContent.includes('[[hooks.session_start]]'), 'packed artifact installs session_start hook');
+    assert.ok(configContent.includes('codex_hooks = true'), 'packed artifact enables codex_hooks');
+    assert.ok(hooksJsonContent.includes('"SessionStart"'), 'packed artifact installs SessionStart hook');
     assert.ok(!configContent.includes('[[hooks.tool_use_complete]]'), 'packed artifact omits unsupported Codex context-monitor hooks');
   });
 });

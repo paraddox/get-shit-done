@@ -95,11 +95,11 @@ Verify with:
 
 - Codex commands are invoked as skills: `$gsd-new-project`, `$gsd-plan-phase`, `$gsd-execute-phase`, etc.
 - Global Codex install location resolves as: `--config-dir` → `CODEX_HOME` → `~/.codex/`
-- GSD writes a managed block into `.codex/config.toml` and preserves non-GSD sections on reinstall/uninstall.
-- Codex installs configure a native `session_start` hook that does two things:
+- GSD writes a managed block into `.codex/config.toml` and a managed `.codex/hooks.json`, preserving non-GSD sections on reinstall/uninstall.
+- Codex installs enable `features.codex_hooks = true` and configure an upstream-style `SessionStart` hook in `.codex/hooks.json` that does two things:
   - surfaces cached GSD update availability into the first turn when known
   - refreshes the npm update cache in the background for later sessions
-- Codex does not currently support the hook stdout-to-context pattern GSD uses for context monitoring, so `gsd-context-monitor.js` is not wired for Codex.
+- Codex does not currently support that same stdout-to-context pattern for generic post-tool hooks, so `gsd-context-monitor.js` is not wired for Codex.
 - Codex still does **not** configure `settings.json` or a statusline equivalent.
 
 ### Staying Updated

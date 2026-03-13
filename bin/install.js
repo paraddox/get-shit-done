@@ -21,8 +21,11 @@ const {
   convertClaudeAgentToCodexAgent,
   generateCodexAgentToml,
   generateCodexConfigBlock,
+  generateCodexHooksFile,
   stripGsdFromCodexConfig,
+  stripGsdFromCodexHooksFile,
   mergeCodexConfig,
+  mergeCodexHooksFile,
 } = require('./lib/codex.cjs');
 
 // Colors
@@ -456,10 +459,13 @@ function installCodexConfig(targetDir, agentsSrc) {
   }
 
   const hookCommands = {
-    session_start: buildCodexHookCommand(targetDir, 'gsd-check-update.js'),
   };
   const gsdBlock = generateCodexConfigBlock(agents, hookCommands);
   mergeCodexConfig(configPath, gsdBlock);
+  mergeCodexHooksFile(
+    path.join(targetDir, 'hooks.json'),
+    buildHookCommand(targetDir, 'gsd-check-update.js')
+  );
 
   return agents.length;
 }
@@ -1066,6 +1072,21 @@ function uninstall(isGlobal, runtime = 'claude') {
         fs.writeFileSync(configPath, cleaned);
         removedCount++;
         console.log(`  ${green}✓${reset} Cleaned GSD sections from config.toml`);
+      }
+    }
+
+    const hooksJsonPath = path.join(targetDir, 'hooks.json');
+    if (fs.existsSync(hooksJsonPath)) {
+      const content = fs.readFileSync(hooksJsonPath, 'utf8');
+      const cleaned = stripGsdFromCodexHooksFile(content);
+      if (cleaned === null) {
+        fs.unlinkSync(hooksJsonPath);
+        removedCount++;
+        console.log(`  ${green}✓${reset} Removed hooks.json (was GSD-only)`);
+      } else if (cleaned !== content) {
+        fs.writeFileSync(hooksJsonPath, cleaned);
+        removedCount++;
+        console.log(`  ${green}✓${reset} Cleaned GSD hooks from hooks.json`);
       }
     }
   } else {
